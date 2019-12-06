@@ -1,0 +1,154 @@
+<html>
+    <body>
+        <div>
+            <p id="gameStatus"></p>
+            <p>Action Coords</p>
+            <input type="number" name="x" min="0" id="coordX">
+            <input type="number" name="y" min="0" id="coordY">
+
+            <button onclick="executeReveal()">Reveal</button>
+            <button onclick="executeFlag()">Flag/Unflag</button>
+        </div>
+        <table id="gameTable">
+
+        </table>
+    </body>
+
+    <script>
+        var domain = "http://127.0.0.1:8000/";
+
+        function mapCellValueToDisplayValue(cellValue) {
+            if (cellValue === -1) {
+                return 'b';
+            } else if (cellValue === -2) {
+                return 'H';
+            } else if (cellValue === -3) {
+                return 'f';
+            } else {
+                return cellValue;
+            }
+        }
+
+        function retrieveMatchInfo() {
+            fetch(domain + 'api/matches/{{ match_id }}/')
+                .then(function(response) {
+                    if(response.ok) {
+                        response.json().then(data => {
+                            console.log(data);
+                            let board = JSON.parse(data.board.cells);
+
+                            let gameTable = document.getElementById('gameTable');
+                            board.forEach((boardRow, rowIndex) => {
+                                var row = gameTable.insertRow();
+                                boardRow.forEach((boardCell, colIndex) => {
+                                    var cell = row.insertCell();
+                                    cell.id = rowIndex + '_' + colIndex;
+
+                                    cell.innerHTML = mapCellValueToDisplayValue(boardCell);
+                                });
+                            });
+                        })
+                        
+                    } else {
+                        console.log(response);
+                    }
+                })
+                .catch(function(error) {
+                    console.log('Error:' + error.message);
+                });
+        }
+
+        function coordsToJsonStr(x, y) {
+            return '{"x": ' + x + ', "y": ' + y + '}';
+        }
+
+        function baseActionCall(api_path, x, y)  {
+            var responseData = null;
+
+            fetch(domain + api_path, {
+                method: 'POST',
+                body: coordsToJsonStr(x, y),
+                headers:{
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/json',
+                }
+            })
+            .then(response => {
+                if(response.ok) {
+                    response.json().then(data => {
+                        console.log(data);
+                        let updatedCells = data.cells;
+                        let gameStatus = data.game_status;
+                        updateTable(updatedCells, gameStatus);
+                    })
+                    .then(function(data) {
+                    })
+                } else {
+                    console.log(response);
+                }
+            })
+            .catch(function(error) {
+                console.log('Error:' + error.message);
+            });
+
+            console.log('has responseData?');
+            console.log(responseData);
+
+            return responseData
+        }
+
+        function reveal(x, y) {
+            baseActionCall('api/matches/{{ match_id }}/reveal/', x, y);
+        }
+
+        function flag(x, y) {
+            baseActionCall('api/matches/{{ match_id }}/flag/', x, y);
+        }
+
+        function updateTable(updatedCells, gameStatus) {
+            console.log('updateTable!');
+
+            // Update table cells
+            var gameTable = document.getElementById('gameTable');
+            for (const [cellCoordsStr, cellValue] of Object.entries(updatedCells)) {
+                console.log(cellCoordsStr);
+                cellCoordsArray = JSON.parse(cellCoordsStr.replace('(', '[').replace(')', ']'));
+                console.log(cellCoordsArray);
+
+                var tableCell = document.getElementById(cellCoordsArray[0] + '_' + cellCoordsArray[1])
+                console.log(tableCell);
+                tableCell.innerHTML = mapCellValueToDisplayValue(cellValue);
+                console.log(tableCell);
+            }
+
+            console.log('check gameStatus');
+            console.log(gameStatus);
+
+            // Check game status
+            if (gameStatus === '1') {
+                document.getElementById('gameStatus').innerHTML = "Game Over - Lose";
+            } else if (gameStatus === '2') {
+                document.getElementById('gameStatus').innerHTML = "Game Finished - Win";
+            }
+        }
+
+        function executeReveal() {
+            console.log("reveal!")
+            var x = document.getElementById('coordX').value;
+            var y = document.getElementById('coordY').value;
+            reveal(x, y);
+        }
+
+        function executeFlag() {
+            console.log("flag!")
+            var x = document.getElementById('coordX').value;
+            var y = document.getElementById('coordY').value;
+            flag(x, y);
+        }
+
+        // Main start
+        retrieveMatchInfo();
+
+
+    </script>
+</html>

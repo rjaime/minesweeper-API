@@ -40,7 +40,6 @@ class MatchViewSet(
 
     @action(detail=True, methods=['post'])
     def reveal(self, request, pk=None):
-        import pdb; pdb.set_trace()
         x, y = self.extract_coords(request.data)
 
         try:

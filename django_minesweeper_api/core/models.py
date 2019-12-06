@@ -57,6 +57,9 @@ class Match(AutoCreatedMixin, models.Model):
     def reveal(self, x, y):
         return self.board.reveal(x, y)
 
+    def flag(self, x, y):
+        return self.board.flag(x, y)
+
 
 class Board(models.Model):
     CELL_MINE = -1
@@ -172,33 +175,42 @@ class Board(models.Model):
         cell = cells_array[x][y]
         if cell == Board.CELL_MINE:
             # Found mine
-            return 1, {}
+            cells_revealed = {
+                str((x, y)): cell,
+            }
+            cells_vis_array[x][y] = Board.CELL_VIS_REVEALED
+            
+            game_status = '1'
         elif cell > 0:
             # Found mine count number, cannot expand
             cells_revealed = {
-                (x, y): cell,
+                str((x, y)): cell,
             }
             cells_vis_array[x][y] = Board.CELL_VIS_REVEALED
 
-            game_status = 0
+            game_status = '0'
         elif cell == 0:
             # Found empty mine count number, expand
             reveal_pos_list = self.expand_reveal(x, y, cells_array, cells_vis_array)
 
             cells_revealed = {
-                (x, y): cell,
-                **{(a, b): cells_array[a][b] for a, b in reveal_pos_list},
+                str((x, y)): cell,
+                **{str((a, b)): cells_array[a][b] for a, b in reveal_pos_list},
             }
             cells_vis_array[x][y] = Board.CELL_VIS_REVEALED
 
-            game_status = 0
+            game_status = '0'
         else:
             raise Exception("Invalid case. Cell value: {}".format(cell))
+
+        # Persist visibility
+        self.cells_visibility = self.serialize_cells_visibility(cells_vis_array)
+        self.save()
 
         return game_status, cells_revealed
 
     def expand_reveal(self, x, y, cells_array, cells_vis_array):
-        reveal_list = [(x, y)]
+        reveal_list = [str((x, y))]
         propagate_list = [(x, y)]
 
         while propagate_list:
@@ -216,7 +228,7 @@ class Board(models.Model):
         
                     if nb_cell != Board.CELL_MINE and nb_vis != Board.CELL_VIS_REVEALED:
                         # Update for user target return
-                        reveal_list.append((nb_pos_x, nb_pos_y))
+                        reveal_list.append(str((nb_pos_x, nb_pos_y)))
                         # Update for model
                         cells_vis_array[nb_pos_x][nb_pos_y] = Board.CELL_VIS_REVEALED
 
@@ -224,6 +236,35 @@ class Board(models.Model):
                             propagate_list.append((nb_pos_x, nb_pos_y))
 
         return reveal_list
+
+    def flag(self, x, y):
+        """
+        Returns:
+            -valid: bool
+            -revealed_cells:
+                {(pos_x, pos_y): cell_value, ..}
+        """
+        cells_vis_array = self.deserialize_cells_visibility(
+            self.cells_visibility
+        )
+
+        cell_vis = cells_vis_array[x][y]
+        
+        if cell_vis == Board.CELL_VIS_HIDDEN:
+            cells_vis_array[x][y] = Board.CELL_VIS_FLAGGED
+            user_cell_vis = Board.USER_CELL_VIS_FLAGGED
+        elif cell_vis == Board.CELL_VIS_FLAGGED:
+            cells_vis_array[x][y] = Board.CELL_VIS_HIDDEN
+            user_cell_vis = Board.USER_CELL_VIS_HIDDEN
+        elif cell_vis == Board.CELL_VIS_REVEALED:
+            return False, {}
+
+        # Persist visibility
+        self.cells_visibility = self.serialize_cells_visibility(cells_vis_array)
+        self.save()
+
+        return True, {str((x, y)): user_cell_vis}
+        
 
     @classmethod
     def get_neighbors_pos(self, x, y, x_limit, y_limit):
