@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # Project apps
     'core',
+    #
+    'rest_framework',
 ]
 
 AUTH_USER_MODEL = 'core.CustomUser'
@@ -73,6 +75,13 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'django_minesweeper_api.wsgi.application'
 
+
+# REST_FRAMEWORK
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'core.auth.SingleUserAuthentication',
+    ]
+}
 
 # Database
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases

@@ -5,10 +5,10 @@ from . import views
 
 router = routers.SimpleRouter()
 
-# router.register(r'matches',
-#     views.MatchViewSet,
-#     base_name='matches'
-# )
+router.register(r'matches',
+    views.MatchViewSet,
+    base_name='matches'
+)
 
 urlpatterns = [
     *router.urls,
