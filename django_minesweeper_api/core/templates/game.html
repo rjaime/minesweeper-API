@@ -1,14 +1,23 @@
 <html>
     <body>
         <div>
-            <p id="gameStatus"></p>
-            <p>Action Coords</p>
+            <h2>Have fun!</h2>
+            <h4 id="gameStatus"></h4>
+
+            <p>References: H=hidden, ?=flagged, number=mines count, b=bomb</p>
+            
+            <br>
+
+            <h3>Action Coords</h3>
             <input type="number" name="x" min="0" id="coordX">
             <input type="number" name="y" min="0" id="coordY">
 
             <button onclick="executeReveal()">Reveal</button>
             <button onclick="executeFlag()">Flag/Unflag</button>
         </div>
+
+        <br>
+
         <table id="gameTable">
 
         </table>
