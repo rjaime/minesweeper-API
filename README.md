@@ -5,7 +5,7 @@
 * Go to https://rjaime.pythonanywhere.com/api/matches/
 * Create a new match using the form and using POST button.
 * Look for the match 'id' value.
-* Go to https://rjaime.pythonanywhere.com/match/<id>/
+* Go to https://rjaime.pythonanywhere.com/match/:id/
 * Fill the coords in terms of row, column and choose action: Reveal, Flag/Unflag.
 * Good luck!
 
