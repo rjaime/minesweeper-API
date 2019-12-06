@@ -75,13 +75,13 @@ class MatchViewSet(
             )
 
         try:
-            game_status, cells_revealed = match.flag(x, y)
+            valid, cells_revealed = match.flag(x, y)
         except Exception as ex:
             raise drf_exceptions.APIException(str(ex))
 
         response_data = {
             'target': [x, y],
-            'game_status': game_status,
+            'game_status': '0',
             'cells': cells_revealed,
         }
         return Response(response_data, status=status.HTTP_200_OK)

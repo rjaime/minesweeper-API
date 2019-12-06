@@ -210,7 +210,9 @@ class Board(models.Model):
         return game_status, cells_revealed
 
     def expand_reveal(self, x, y, cells_array, cells_vis_array):
-        reveal_list = [str((x, y))]
+        reveal_list = [(x, y)]
+        cells_vis_array[x][y] = Board.CELL_VIS_REVEALED
+
         propagate_list = [(x, y)]
 
         while propagate_list:
@@ -226,9 +228,9 @@ class Board(models.Model):
                     nb_cell = cells_array[nb_pos_x][nb_pos_y]
                     nb_vis = cells_vis_array[nb_pos_x][nb_pos_y]
         
-                    if nb_cell != Board.CELL_MINE and nb_vis != Board.CELL_VIS_REVEALED:
+                    if nb_vis == Board.CELL_VIS_HIDDEN:
                         # Update for user target return
-                        reveal_list.append(str((nb_pos_x, nb_pos_y)))
+                        reveal_list.append((nb_pos_x, nb_pos_y))
                         # Update for model
                         cells_vis_array[nb_pos_x][nb_pos_y] = Board.CELL_VIS_REVEALED
 
